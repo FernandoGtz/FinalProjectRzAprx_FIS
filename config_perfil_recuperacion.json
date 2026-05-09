@@ -1,0 +1,41 @@
+{
+  "perfil": "recuperacion",
+  "ponderaciones_tier": {
+    "1": 0.10,
+    "2": 0.30,
+    "3": 0.60
+  },
+  "matriz_reglas_rm": [
+    {"delta_1rm": "Retroceso", "rpe": "Suboptimo", "rm": "Sobresaliente"},
+    {"delta_1rm": "Retroceso", "rpe": "Optimo", "rm": "Aceptable"},
+    {"delta_1rm": "Retroceso", "rpe": "Limite", "rm": "Deficiente"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Suboptimo", "rm": "Sobresaliente"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Optimo", "rm": "Aceptable"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Limite", "rm": "Deficiente"},
+    {"delta_1rm": "Progreso", "rpe": "Suboptimo", "rm": "Aceptable"},
+    {"delta_1rm": "Progreso", "rpe": "Optimo", "rm": "Deficiente"},
+    {"delta_1rm": "Progreso", "rpe": "Limite", "rm": "Deficiente"}
+  ],
+  "matriz_reglas_ce": [
+    {"ct": "Comprometida", "fa": "Baja", "ce": "Deficiente"},
+    {"ct": "Comprometida", "fa": "Manejable", "ce": "Deficiente"},
+    {"ct": "Comprometida", "fa": "Critica", "ce": "Deficiente"},
+    {"ct": "Aceptable", "fa": "Baja", "ce": "Estandar"},
+    {"ct": "Aceptable", "fa": "Manejable", "ce": "Estandar"},
+    {"ct": "Aceptable", "fa": "Critica", "ce": "Deficiente"},
+    {"ct": "Impecable", "fa": "Baja", "ce": "Optima"},
+    {"ct": "Impecable", "fa": "Manejable", "ce": "Estandar"},
+    {"ct": "Impecable", "fa": "Critica", "ce": "Deficiente"}
+  ],
+  "matriz_reglas_final": [
+    {"rm": "Deficiente", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Deficiente", "ce": "Estandar", "ics": "Pobre"},
+    {"rm": "Deficiente", "ce": "Optima", "ics": "Productivo"},
+    {"rm": "Aceptable", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Aceptable", "ce": "Estandar", "ics": "Productivo"},
+    {"rm": "Aceptable", "ce": "Optima", "ics": "AltoRendimiento"},
+    {"rm": "Sobresaliente", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Sobresaliente", "ce": "Estandar", "ics": "Productivo"},
+    {"rm": "Sobresaliente", "ce": "Optima", "ics": "AltoRendimiento"}
+  ]
+}

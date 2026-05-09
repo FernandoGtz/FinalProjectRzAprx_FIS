@@ -1,0 +1,41 @@
+{
+  "perfil": "hipertrofia",
+  "ponderaciones_tier": {
+    "1": 0.45,
+    "2": 0.50,
+    "3": 0.05
+  },
+  "matriz_reglas_rm": [
+    {"delta_1rm": "Retroceso", "rpe": "Suboptimo", "rm": "Deficiente"},
+    {"delta_1rm": "Retroceso", "rpe": "Optimo", "rm": "Aceptable"},
+    {"delta_1rm": "Retroceso", "rpe": "Limite", "rm": "Aceptable"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Suboptimo", "rm": "Deficiente"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Optimo", "rm": "Aceptable"},
+    {"delta_1rm": "Mantenimiento", "rpe": "Limite", "rm": "Aceptable"},
+    {"delta_1rm": "Progreso", "rpe": "Suboptimo", "rm": "Aceptable"},
+    {"delta_1rm": "Progreso", "rpe": "Optimo", "rm": "Sobresaliente"},
+    {"delta_1rm": "Progreso", "rpe": "Limite", "rm": "Sobresaliente"}
+  ],
+  "matriz_reglas_ce": [
+    {"ct": "Comprometida", "fa": "Baja", "ce": "Deficiente"},
+    {"ct": "Comprometida", "fa": "Manejable", "ce": "Deficiente"},
+    {"ct": "Comprometida", "fa": "Critica", "ce": "Deficiente"},
+    {"ct": "Aceptable", "fa": "Baja", "ce": "Estandar"},
+    {"ct": "Aceptable", "fa": "Manejable", "ce": "Optima"},
+    {"ct": "Aceptable", "fa": "Critica", "ce": "Estandar"},
+    {"ct": "Impecable", "fa": "Baja", "ce": "Optima"},
+    {"ct": "Impecable", "fa": "Manejable", "ce": "Optima"},
+    {"ct": "Impecable", "fa": "Critica", "ce": "Estandar"}
+  ],
+  "matriz_reglas_final": [
+    {"rm": "Deficiente", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Deficiente", "ce": "Estandar", "ics": "Pobre"},
+    {"rm": "Deficiente", "ce": "Optima", "ics": "Productivo"},
+    {"rm": "Aceptable", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Aceptable", "ce": "Estandar", "ics": "Productivo"},
+    {"rm": "Aceptable", "ce": "Optima", "ics": "AltoRendimiento"},
+    {"rm": "Sobresaliente", "ce": "Deficiente", "ics": "Pobre"},
+    {"rm": "Sobresaliente", "ce": "Estandar", "ics": "AltoRendimiento"},
+    {"rm": "Sobresaliente", "ce": "Optima", "ics": "AltoRendimiento"}
+  ]
+}
