@@ -5,3 +5,4 @@ scikit-fuzzy
 numpy
 scipy
 networkx
+packaging
