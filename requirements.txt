@@ -3,3 +3,5 @@ uvicorn
 pydantic
 scikit-fuzzy
 numpy
+scipy
+networkx
