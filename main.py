@@ -7,13 +7,14 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
-
-# CONTRATOS DE DATOS
+
+
+# CONTRATOS DE DATOS
+
 class EjercicioHistorico(BaseModel):
     id_ejercicio: str
     peso: float
     reps: int
-
 
 class EjercicioActual(BaseModel):
     id_ejercicio: str
@@ -23,13 +24,11 @@ class EjercicioActual(BaseModel):
     ct: float
     fa: float
 
-
 class EjercicioRutina(BaseModel):
     id_ejercicio: str
     nombre: str
     musculo: str
     tier: int
-
 
 class PayloadEvaluacion(BaseModel):
     perfil: str
@@ -37,12 +36,12 @@ class PayloadEvaluacion(BaseModel):
     historico: List[EjercicioHistorico]
     rutina: List[EjercicioRutina]
 
-
-# ESTADO GLOBAL
+# ESTADO GLOBAL
 configuraciones = {}
 motores_fis_estaticos = {}
-
-# FUNCIONES AUXILIARES
+
+
+# FUNCIONES AUXILIARES
 def calcular_1rm(peso, reps):
     if reps <= 1:
         return peso
@@ -51,7 +50,6 @@ def calcular_1rm(peso, reps):
 
 def procesar_datos(registros, config, rutina):
     datos_procesados = []
-
 
     historico_dict = { # Generamos un diccionario de ejercicios con su registro historico
         reg['id_ejercicio']: reg
@@ -79,23 +77,28 @@ def procesar_datos(registros, config, rutina):
                 detail=f"No existe configuración de rutina para el ejercicio {id_ej}"
             )
 
+        # Guardamos en cada diccionario el identificador del ejercicio sobre el que se está interando
         reg_historico = historico_dict[id_ej]
         rutina_info = rutina_dict[id_ej]
 
+        # Calculamos el 1RM de cada ejercicio actual en el registro actual
         rm_actual = calcular_1rm(reg_actual['peso'], reg_actual['reps'])
 
+        # Calculamos el 1RM de cada ejercicio del registro historico
         rm_historico = calcular_1rm(reg_historico['peso'], reg_historico['reps'])
 
-        if rm_historico == 0:
+        if rm_historico == 0: # Validacion contra 1RM = 0
             raise HTTPException(status_code=422, detail=f"1RM histórico inválido para {id_ej}")
 
+        # Calculamos la variacion porcentual del 1RM respecto al registro historico
         delta_1rm = ((rm_actual - rm_historico) / rm_historico) * 100
 
+        # Establecemos el rango para delta1RM
         limite_min = config.get('limite_min', -15)
         limite_max = config.get('limite_max', 15)
-
         delta_1rm = float(np.clip(delta_1rm, limite_min, limite_max))
 
+        # Cargamos en los datos procesados toda la informacion calculada y tomada del registro actual
         datos_procesados.append({
             'id_ejercicio': id_ej,
             'nombre': rutina_info['nombre'],
@@ -112,9 +115,7 @@ def procesar_datos(registros, config, rutina):
     return datos_procesados
 
 
-# =========================================================
 # CONSTRUCCION FIS
-# =========================================================
 def construir_fis(config):
     # Definición de Rangos de las Variables (Universo Discurso)
     # -- FIS 1 --
@@ -184,9 +185,7 @@ def construir_fis(config):
     ics['Productivo'] = fuzz.trimf(ics.universe, [30, 50, 70])
     ics['AltoRendimiento'] = fuzz.trapmf(ics.universe, [60, 80, 100, 100])
 
-    # =====================================================
     # REGLAS
-    # =====================================================
     # Generacion de Reglas
     reglas_rm_obj = []
     for regla in config['matriz_reglas_rm']:
@@ -212,72 +211,65 @@ def construir_fis(config):
         regla_obj = ctrl.Rule(rm_term & ce_term, ics_term)
         reglas_final_obj.append(regla_obj)
 
-    # =====================================================
-    # CONTROLADORES
-    # =====================================================
+    # Controladores para cada salida de cada FIS
     rm_ctrl = ctrl.ControlSystem(reglas_rm_obj)
     ce_ctrl = ctrl.ControlSystem(reglas_ce_obj)
     ics_ctrl = ctrl.ControlSystem(reglas_final_obj)
 
-    return {
+    # Devolvemos las salidas de los 3 FIS de cada ejercicio
+    return { 
         'rm_ctrl': rm_ctrl,
         'ce_ctrl': ce_ctrl,
         'ics_ctrl': ics_ctrl
     }
 
 
-# =========================================================
 # CICLO DE VIDA
-# =========================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     global configuraciones
     global motores_fis_estaticos
 
-    # ============================================
     # CARGAR CONFIGURACIONES
-    # ============================================
     configuraciones['hipertrofia'] = json.load(open('config_perfil_hipertrofia.json'))
     configuraciones['recuperacion'] = json.load(open('config_perfil_recuperacion.json'))
     configuraciones['fuerza'] = json.load(open('config_perfil_fuerza.json'))
     configuraciones['resistencia'] = json.load(open('config_perfil_resistencia.json'))
 
-    # ============================================
     # PRECOMPILAR CONTROLADORES FIS
-    # ============================================
     motores_fis_estaticos['hipertrofia'] = construir_fis(configuraciones['hipertrofia'])
     motores_fis_estaticos['recuperacion'] = construir_fis(configuraciones['recuperacion'])
     motores_fis_estaticos['fuerza'] = construir_fis(configuraciones['fuerza'])
     motores_fis_estaticos['resistencia'] = construir_fis(configuraciones['resistencia'])
 
+    # Log para confirmar la compilacion exitosa
     print("FIS precompilados correctamente")
 
+    # Apagado del servidor
     yield
-
     print("Apagando servidor...")
 
 
+# Construimos la FastAPI
 app = FastAPI(
     title="FIS BMG API",
     lifespan=lifespan
 )
 
 
-# =========================================================
 # ENDPOINT
-# =========================================================
-@app.post("/api/evaluar")
+@app.post("/api/evaluar") # Ruta a la que la app Flutter hara la peticion POST
 def evaluar_sesion(payload: PayloadEvaluacion):
 
-    perfil_solicitado = payload.perfil.lower()
+    perfil_solicitado = payload.perfil.lower() # Transformamos todo el payload a minusculas para mejor control
 
-    if perfil_solicitado not in configuraciones:
+    if perfil_solicitado not in configuraciones: # Validacion contra una configuracion no existente
         raise HTTPException(
             status_code=400,
             detail=f"Perfil '{perfil_solicitado}' no configurado"
         )
 
+    # Tomamos y especificamos bajo que perfil estamos evaluando
     config_activa = configuraciones[perfil_solicitado]
 
     registros = {
@@ -296,12 +288,14 @@ def evaluar_sesion(payload: PayloadEvaluacion):
         for item in payload.rutina
     ]
 
+    # Llamamos a la funcion para formar los diccionarios y procesar las entradas
     datos_procesados = procesar_datos(
         registros,
         config_activa,
         rutina
     )
 
+    # Creamos y controlamos la operacion de cada FIS
     rm_sim = ctrl.ControlSystemSimulation(
         motores_fis_estaticos[perfil_solicitado]['rm_ctrl']
     )
@@ -314,46 +308,42 @@ def evaluar_sesion(payload: PayloadEvaluacion):
         motores_fis_estaticos[perfil_solicitado]['ics_ctrl']
     )
 
+    # Declaramos arreglos y matrices donde guardaremos los resultados
     resultados = []
     resultados_por_musculo = {}
 
+    # Ciclo para evaluar cada ejercicio
     for dato in datos_procesados:
         try:
-            # =============================================
             # FIS 1
-            # =============================================
             rm_sim.input['delta_1rm'] = np.clip(dato['delta_1rm'],-15,15)
             rm_sim.input['rpe'] = np.clip(dato['rpe'],0,10)
             rm_sim.compute()
             rm_output = float(rm_sim.output['rm'])
 
-            # =============================================
             # FIS 2
-            # =============================================
             ce_sim.input['ct'] = np.clip(dato['ct'],0.5,5.5)
             ce_sim.input['fa'] = np.clip(dato['fa'],0,10)
             ce_sim.compute()
             ce_output = float(ce_sim.output['ce'])
 
-            # =============================================
             # FIS 3
-            # =============================================
             ics_sim.input['rm_fis3'] = np.clip(rm_output,0,100)
             ics_sim.input['ce_fis3'] = np.clip(ce_output,0,100)
             ics_sim.compute()
             ics_output = float(ics_sim.output['ics'])
 
-        except Exception as e:
-
+        except Exception as e: # Capturamos error durante el proceso de fusificacion
             raise HTTPException(
                 status_code=422,
                 detail=f"Error en inferencia difusa para {dato['id_ejercicio']}: {str(e)}"
             )
 
+        # Cargaamos el tier del ejercicio y lo ponderamos 
         tier = dato['tier']
-
         ponderacion = float(config_activa['ponderaciones_tier'][str(tier)])
 
+        # Guardamos todo dato tomado, procesado y evaluado de cada ejercicio
         resultado_ejercicio = {
             'id_ejercicio': dato['id_ejercicio'],
             'nombre': dato['nombre'],
@@ -370,10 +360,13 @@ def evaluar_sesion(payload: PayloadEvaluacion):
             'ics_ponderado': round(ics_output * ponderacion,2)
         }
 
+        # Agregamos a resultados
         resultados.append(resultado_ejercicio)
 
+        # Creamos un diccionario de musculos
         musculo = dato['musculo']
 
+        # Validacion para capturar cuando un musculo no se encuentra en el diccionario de musculos
         if musculo not in resultados_por_musculo:
             resultados_por_musculo[musculo] = {
                 'ejercicios': [],
@@ -381,43 +374,27 @@ def evaluar_sesion(payload: PayloadEvaluacion):
                 'ponderacion_total': 0
             }
 
+        # Agregamos el resultado por grupo muscular realizando la suma ponderada
         resultados_por_musculo[musculo]['ejercicios'].append(resultado_ejercicio)
         resultados_por_musculo[musculo]['ics_suma_ponderada'] += ics_output * ponderacion
         resultados_por_musculo[musculo]['ponderacion_total'] += ponderacion
 
-    # =====================================================
     # CALIFICACION POR MUSCULO
-    # =====================================================
     ics_por_musculo = {}
 
+    # Iteramos sobre cada grupo muscular para darle un ICS
     for musculo, datos in resultados_por_musculo.items():
         if datos['ponderacion_total'] > 0:
             ics_por_musculo[musculo] = round(datos['ics_suma_ponderada'] / datos['ponderacion_total'],2)
 
-    # =====================================================
     # CALIFICACION FINAL
-    # =====================================================
-    ics_suma_total = sum(
-        r['ics_ponderado']
-        for r in resultados
-    )
+    ics_suma_total = sum(r['ics_ponderado'] for r in resultados)
 
-    ponderacion_suma_total = sum(
-        r['ponderacion']
-        for r in resultados
-    )
+    ponderacion_suma_total = sum(r['ponderacion'] for r in resultados)
 
-    calificacion_final = round(
-        (
-            ics_suma_total /
-            ponderacion_suma_total
-        ),
-        2
-    ) if ponderacion_suma_total > 0 else 0
+    calificacion_final = round((ics_suma_total /ponderacion_suma_total),2) if ponderacion_suma_total > 0 else 0
 
-    # =====================================================
-    # RESPONSE
-    # =====================================================
+    # RESPONSE que llegara a la app flutter para mostrarla al usuario
     return {
         "perfil": perfil_solicitado,
         "calificacion_final": calificacion_final,
