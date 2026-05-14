@@ -243,24 +243,18 @@ async def lifespan(app: FastAPI):
     # ============================================
     # CARGAR CONFIGURACIONES
     # ============================================
-    configuraciones['hipertrofia'] = json.load(
-        open('config_perfil_hipertrofia.json')
-    )
-
-    configuraciones['recuperacion'] = json.load(
-        open('config_perfil_recuperacion.json')
-    )
+    configuraciones['hipertrofia'] = json.load(open('config_perfil_hipertrofia.json'))
+    configuraciones['recuperacion'] = json.load(open('config_perfil_recuperacion.json'))
+    configuraciones['fuerza'] = json.load(open('config_perfil_fuerza.json'))
+    configuraciones['resistencia'] = json.load(open('config_perfil_resistencia.json'))
 
     # ============================================
     # PRECOMPILAR CONTROLADORES FIS
     # ============================================
-    motores_fis_estaticos['hipertrofia'] = construir_fis(
-        configuraciones['hipertrofia']
-    )
-
-    motores_fis_estaticos['recuperacion'] = construir_fis(
-        configuraciones['recuperacion']
-    )
+    motores_fis_estaticos['hipertrofia'] = construir_fis(configuraciones['hipertrofia'])
+    motores_fis_estaticos['recuperacion'] = construir_fis(configuraciones['recuperacion'])
+    motores_fis_estaticos['fuerza'] = construir_fis(configuraciones['fuerza'])
+    motores_fis_estaticos['resistencia'] = construir_fis(configuraciones['resistencia'])
 
     print("FIS precompilados correctamente")
 
