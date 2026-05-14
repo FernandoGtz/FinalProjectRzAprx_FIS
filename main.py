@@ -7,10 +7,8 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
-
-# =========================================================
-# CONTRATOS DE DATOS
-# =========================================================
+
+# CONTRATOS DE DATOS
 class EjercicioHistorico(BaseModel):
     id_ejercicio: str
     peso: float
@@ -39,31 +37,28 @@ class PayloadEvaluacion(BaseModel):
     historico: List[EjercicioHistorico]
     rutina: List[EjercicioRutina]
 
-
-# =========================================================
-# ESTADO GLOBAL
-# =========================================================
+
+# ESTADO GLOBAL
 configuraciones = {}
 motores_fis_estaticos = {}
-
-# =========================================================
-# FUNCIONES AUXILIARES
-# =========================================================
+
+# FUNCIONES AUXILIARES
 def calcular_1rm(peso, reps):
     if reps <= 1:
         return peso
-    return peso * (1 + 0.033 * reps)
+    return peso * (1 + 0.033 * reps) # Formula de Epley
 
 
 def procesar_datos(registros, config, rutina):
     datos_procesados = []
 
-    historico_dict = {
+
+    historico_dict = { # Generamos un diccionario de ejercicios con su registro historico
         reg['id_ejercicio']: reg
         for reg in registros['historico']
-    }
+    } 
 
-    rutina_dict = {
+    rutina_dict = { # Generamos un diccionario de ejercicios en base a la rutina
         ej['id_ejercicio']: ej
         for ej in rutina
     }
@@ -72,7 +67,7 @@ def procesar_datos(registros, config, rutina):
 
         id_ej = reg_actual['id_ejercicio']
 
-        if id_ej not in historico_dict:
+        if id_ej not in historico_dict: # Validación contra registros históricos inexistentes 
             raise HTTPException(
                 status_code=422,
                 detail=f"No existe histórico para el ejercicio {id_ej}"
